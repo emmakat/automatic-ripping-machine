@@ -22,14 +22,14 @@ if ! id -u "${USER}" ; then
 fi
 
 # setup needed/expected dirs if not found
-SUBDIRS="config media media/completed media/raw media/movies encode logs db Music tmp.MakeMKV"
+SUBDIRS="config media media/completed media/raw media/movies encode logs db Music .MakeMKV"
 for dir in $SUBDIRS ; do
   thisDir="${STORAGE}/${dir}"
   if [[ ! -d "${thisDir}" ]] ; then
     echo "creating dir ${thisDir}"
     mkdir -p -m 0755 "${thisDir}"
     chown "${USER}.${USER}" "${thisDir}"
-    chmod -R ug+rwX "${STORAGE}"
+    
   fi
 done
 if [[ ! -f "${HOME}/config/arm.yaml" ]] ; then
