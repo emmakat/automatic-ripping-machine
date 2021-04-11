@@ -8,6 +8,7 @@ UID="${UID:-1000}"
 GID="${GID:-1000}"
 export USER=arm
 export HOME="/home/${USER}"
+export STORAGE="/media/arm/storage/"
 
 echo "creating group [arm] with id ${GID}"
 groupadd -fo -g "${GID}" "${USER}"
@@ -23,11 +24,12 @@ fi
 # setup needed/expected dirs if not found
 SUBDIRS="config media media/completed media/raw media/movies encode logs db Music .MakeMKV"
 for dir in $SUBDIRS ; do
-  thisDir="${HOME}/${dir}"
+  thisDir="${STORAGE}/${dir}"
   if [[ ! -d "${thisDir}" ]] ; then
     echo "creating dir ${thisDir}"
     mkdir -p -m 0755 "${thisDir}"
     chown "${USER}.${USER}" "${thisDir}"
+    sudo chmod -R 777 "${STORAGE}"
   fi
 done
 if [[ ! -f "${HOME}/config/arm.yaml" ]] ; then
