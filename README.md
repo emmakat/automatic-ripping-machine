@@ -38,6 +38,12 @@ This repo assumes that you want to store things somewhere else besides your home
 ### Build the image:
 `arm/scripts/docker_build.sh`
 
+### Setup the udev rules 
+`setup/docker-setup.sh`  
+(this step is kindof broken right now, but the important thing is to get the docker-arm.rules copied into /etc/udev/rules.d and then force a reload of udevadm control)  
+`install setup/docker-arm.rules /etc/udev/rules.d/docker-arm.rules`  
+`sudo udevadm control --reload`
+
 ### Create the container:
 Remember to modify this for YOUR unique configuration!
  ```
@@ -78,4 +84,4 @@ Pull requests may be considered if they improve the documentation or something i
 [MIT License](LICENSE)
 
 
-### This docker is possible thanks to [Deekue's Repo](https://github.com/deekue/automatic-ripping-machine/tree/docker) & [Automatic Ripping Machine](https://github.com/automatic-ripping-machine/automatic-ripping-machine)
+### This docker is possible thanks to [1337-server's repo](https://github.com/1337-server/automatic-ripping-machine/tree/docker)
