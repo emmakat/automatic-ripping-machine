@@ -29,7 +29,7 @@ chmod +x arm/scripts/docker_build.sh
 **Storage for files**    
 This repo assumes that you want to store things somewhere else besides your home directory. 
   You need to edit docker-entrypoint.sh line 11 with the correct path for you:
-  `export STORAGE="/path/to/your/storage/"`  
+  `export STORAGE="/path/to/your/storage"`  
 **important!** if you do NOT want to have a separate storage drive, you have to comment the STORAGE variable out or remove it.   
   AND modify line 27 to reference the HOME variable instead of storage!  
   `thisDir="${STORAGE}/${dir}"`
@@ -57,11 +57,11 @@ docker run -d \
     --device="/dev/sr6:/dev/sr6" \
     -p "8080:8080" \
     -e UID="1000" -e GID="1000" \
-   -v "/path/to/your/storage/:/home/arm" \
-   -v "/path/to/your/storage/Music/:/home/arm/Music" \
-   -v "/path/to/your/storage/config/:/home/arm/config" \
-   -v "/path/to/your/storage/logs/:/home/arm/logs" \
-   -v "/path/to/your/storage/media/:/home/arm/media" \
+   -v "/path/to/your/storage:/home/arm" \
+   -v "/path/to/your/storage/Music:/home/arm/Music" \
+   -v "/path/to/your/storage/config:/home/arm/config" \
+   -v "/path/to/your/storage/logs:/home/arm/logs" \
+   -v "/path/to/your/storage/media:/home/arm/media" \
     --cap-add SYS_ADMIN \
     --security-opt apparmor:unconfined \
     --restart "always" \
