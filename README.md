@@ -58,10 +58,10 @@ docker run -d \
     -p "8080:8080" \
     -e UID="1000" -e GID="1000" \
    -v "/path/to/your/storage/:/home/arm" \
-   -v "/path/to/your/storage/Music:/home/arm/Music" \
-   -v "/path/to/your/storage/config:/home/arm/config" \
-   -v "/path/to/your/storage/logs:/home/arm/logs" \
-   -v "/path/to/your/storage/media:/home/arm/media" \
+   -v "/path/to/your/storage/Music/:/home/arm/Music" \
+   -v "/path/to/your/storage/config/:/home/arm/config" \
+   -v "/path/to/your/storage/logs/:/home/arm/logs" \
+   -v "/path/to/your/storage/media/:/home/arm/media" \
     --cap-add SYS_ADMIN \
     --security-opt apparmor:unconfined \
     --restart "always" \
