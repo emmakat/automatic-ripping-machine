@@ -1,5 +1,6 @@
 ## Hello!  
-This project's readme and some of the files have been *significantly* modified to suit my needs (I have 7 optical drives and I want to store all the media on a 2nd harddrive away from my OS). So you should probably not use it or expect support!
+This is a fork of the awesome project https://github.com/1337-server/automatic-ripping-machine/tree/docker 
+The readme and some of the files have been *significantly* modified to suit my needs so you should probably not use it as I can't respond to support requests.
 
 ### Pre-requisites
 1. From a fresh image with Ubuntu 20.10 minimal install  
