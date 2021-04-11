@@ -115,6 +115,9 @@ RUN \
     ffmpeg \
     flac \
     glyrc \
+    AtomicParsley \
+    lame \
+    eyed3 \
     default-jre-headless \
     handbrake-cli \
     libavcodec-extra \
