@@ -2,11 +2,14 @@
 This is a fork of the awesome project https://github.com/1337-server/automatic-ripping-machine/tree/docker 
 The readme and some of the files have been *significantly* modified to suit my needs so you should probably not use it as I can't respond to support requests.
 
+## Building an ARM Docker Image  
+This requires you to build an image from source. 
+
 ### Pre-requisites
-1. From a fresh image with Ubuntu 20.10 minimal install  
-2. Create the arm user and set a password  
-3. Install VSCodium, lsscsi, and any other needed utilities as desired  
-4. Setup all of the optical drives so that the arm (non-root) user can mount them. Run `lsscsi -g` to verify their mountpoints if you're unsure.  
+1. Instructions tested based on a new Ubuntu 20.10 minimal install 
+2. Create the arm user and set a password (arm has to be the 1st user created)  
+3. Install Docker, an editor such as Atom or VS Codium, lsscsi, and any other needed utilities as desired  
+4. Setup all of your optical drives so that the arm (non-root) user can mount them. Run `lsscsi -g` to verify their mountpoints if you're unsure.  
   -run `sudo mkdir -p /mnt/dev/sr0` and repeat for each device, e.g., sr1, sr2, etc  
   -edit fstab and add an entry for each drive  
   `sudo nano /etc/fstab`     
@@ -19,10 +22,12 @@ From opt/arm (you may need to chmod -R /opt in order to do the git clone without
 
 `git clone -b jessica https://github.com/emmakat/automatic-ripping-machine.git arm`  
 
-Now fix the permissions  
+Netx you'll need to fix the permissions  
 ```
-chmod +x arm/scripts/docker_build.sh arm/scripts/docker-entrypoint.sh arm/scripts/docker_arm_wrapper.sh   
-chmod +x arm/arm/ripper/main.py  
+chmod +x arm/scripts/docker_build.sh
+chmod +x arm/scripts/docker-entrypoint.sh
+chmod +x arm/scripts/docker_arm_wrapper.sh
+chmod +x arm/arm/ripper/main.py
 chmod -R 777 arm/docs  
 chmod +x arm/scripts/docker_build.sh
 ```
@@ -30,19 +35,19 @@ chmod +x arm/scripts/docker_build.sh
 This repo assumes that you want to store things somewhere else besides your home directory. 
   You need to edit docker-entrypoint.sh line 11 with the correct path for you:
   `export STORAGE="/path/to/your/storage"`  
-**important!** if you do NOT want to have a separate storage drive, you have to comment the STORAGE variable out or remove it.   
-  AND modify line 27 to reference the HOME variable instead of storage!  
-  `thisDir="${STORAGE}/${dir}"`
+**important!** if you do NOT want to have a separate storage drive, you have to comment the STORAGE variable out or remove it. Then you have to modify the section called `# setup needed/expected dirs if not found` and change the variable to HOME  `thisDir="${STORAGE}/${dir}"`
 
 
 ### Build the image:
 `arm/scripts/docker_build.sh`
 
 ### Setup the udev rules 
-`setup/docker-setup.sh`  
-(this step is kindof broken right now, but the important thing is to get the docker-arm.rules copied into /etc/udev/rules.d and then force a reload of udevadm control)  
-`install setup/docker-arm.rules /etc/udev/rules.d/docker-arm.rules`  
+Save a copy of this [udev rule](https://github.com/1337-server/automatic-ripping-machine/blob/docker/setup/docker-arm.rules) into /etc/udev/rules.d
+`cd /etc/udev/rules.d`
+`sudo wget https://github.com/1337-server/automatic-ripping-machine/blob/docker/setup/docker-arm.rules
+Force a reload of udevadm control  
 `sudo udevadm control --reload`
+
 
 ### Create the container:
 Remember to modify this for YOUR unique configuration!
@@ -69,13 +74,14 @@ docker run -d \
     arm-combined:latest
 ```
 ### Fix the permissions on storage device
-`sudo chmod -R 777 /path/to/your/storage/`
+`sudo chmod -R 777 /path/to/your/storage`
 
 ### Edit the .abcde.conf configuration for your music settings  
-This file is hidden, and located by default in your /home/arm/config directory 
-You can use mine for inspiration (located in the setup directory) but please understand that it has been significantly customized for my particular needs. YMMV.
+The default file will be copied into your /home/arm/config directory (it is a hidden file, if you wish to edit it, use `sudo nano .abcde.conf` from the config directory, then make changes from there. The version in the setup directory has been significantly customized for my particular needs. YMMV.
 
-### Open localhost:8080 and setup the admin account
+### Open localhost:8080/setup and create the admin account, then login to the account
+
+ARM should now be fully setup, and ripping should start when a disc is inserted.
 
 See the original project's [wiki](https://github.com/1337-server/automatic-ripping-machine/wiki/docker) for more information
  
