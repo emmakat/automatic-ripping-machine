@@ -71,6 +71,10 @@ docker run -d \
 ### Fix the permissions on storage device
 `sudo chmod -R 777 /path/to/your/storage/`
 
+### Edit the .abcde.conf configuration for your music settings  
+This file is hidden, and located by default in your /home/arm/config directory 
+You can use mine for inspiration (located in the setup directory) but please understand that it has been significantly customized for my particular needs. YMMV.
+
 ### Open localhost:8080 and setup the admin account
 
 See the original project's [wiki](https://github.com/1337-server/automatic-ripping-machine/wiki/docker) for more information
