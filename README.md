@@ -1,5 +1,5 @@
 ## Hello!  
-This project has been *significantly* modified to suit my needs. You should probably not use it! Please do not expect support.
+This project's readme and some of the files have been *significantly* modified to suit my needs (I have 7 optical drives and I want to store all the media on a 2nd harddrive away from my OS). So you should probably not use it or expect support!
 
 ### Pre-requisites
 1. From a fresh image with Ubuntu 20.10 minimal install  
@@ -38,6 +38,7 @@ This repo assumes that you want to store things somewhere else besides your home
 `arm/scripts/docker_build.sh`
 
 ### Create the container:
+Remember to modify this for YOUR unique configuration!
  ```
 docker run -d \
     --device="/dev/sr0:/dev/sr0" \
@@ -49,11 +50,11 @@ docker run -d \
     --device="/dev/sr6:/dev/sr6" \
     -p "8080:8080" \
     -e UID="1000" -e GID="1000" \
-   -v "/media/arm/storage:/home/arm" \
-   -v "/media/arm/storage/Music:/home/arm/Music" \
-   -v "/media/arm/storage/config:/home/arm/config" \
-   -v "/media/arm/storage/logs:/home/arm/logs" \
-   -v "/media/arm/storage/media:/home/arm/media" \
+   -v "/path/to/your/storage/:/home/arm" \
+   -v "/path/to/your/storage/Music:/home/arm/Music" \
+   -v "/path/to/your/storage/config:/home/arm/config" \
+   -v "/path/to/your/storage/logs:/home/arm/logs" \
+   -v "/path/to/your/storage/media:/home/arm/media" \
     --cap-add SYS_ADMIN \
     --security-opt apparmor:unconfined \
     --restart "always" \
@@ -61,7 +62,7 @@ docker run -d \
     arm-combined:latest
 ```
 ### Fix the permissions on storage device
-`sudo chmod -R 777 /media/arm/storage`
+`sudo chmod -R 777 /path/to/your/storage/`
 
 ### Open localhost:8080 and setup the admin account
 
