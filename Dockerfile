@@ -111,10 +111,12 @@ RUN \
   DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends \
     abcde \
     cdparanoia \
+    disc-id \
     eject \
     ffmpeg \
     flac \
     glyrc \
+    glyr \
     atomicparsley \
     lame \
     eyed3 \
