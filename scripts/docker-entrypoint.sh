@@ -8,7 +8,7 @@ UID="${UID:-1000}"
 GID="${GID:-1000}"
 export USER=arm
 export HOME="/home/${USER}"
-export STORAGE="/media/arm/storage"
+export STORAGE="/media/arm/storage/"
 
 echo "creating group [arm] with id ${GID}"
 groupadd -fo -g "${GID}" "${USER}"
@@ -29,7 +29,6 @@ for dir in $SUBDIRS ; do
     echo "creating dir ${thisDir}"
     mkdir -p -m 0755 "${thisDir}"
     chown "${USER}.${USER}" "${thisDir}"
-    
   fi
 done
 if [[ ! -f "${HOME}/config/arm.yaml" ]] ; then
@@ -60,4 +59,3 @@ if [[ "${RUN_AS_USER:-true}" == "true" ]] ; then
 else
   exec "$@"
 fi
-

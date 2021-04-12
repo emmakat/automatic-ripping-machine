@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 
-#SRCDIR="/opt/arm"
+SRCDIR="/opt"
 DATADIR="/srv/docker/arm"
 
-sudo mkdir -p "$DATADIR"
+sudo chmod -R 777 /opt
+cd /opt
+git clone -b jessica https://github.com/emmakat/automatic-ripping-machine.git arm
+chmod +x arm/scripts/docker_build.sh
+chmod +x arm/scripts/docker-entrypoint.sh
+chmod +x arm/scripts/docker_arm_wrapper.sh
+chmod +x arm/arm/ripper/main.py
+chmod -R 777 arm/docs  
+chmod +x arm/scripts/docker_build.sh
 
-#cd "$SRCDIR"
-#docker build -t arm ${APT_PROXY:+--build-target ${APT_PROXY}} .
-
-install setup/docker-arm.rules /etc/udev/rules.d/docker-arm.rules
-udevadm control --reload
+cd "$SRCDIR"
+arm/scripts/docker_build.sh
+sudo install -D -v setup/docker-arm.rules -t /etc/udev/rules.d
+sudo udevadm control --reload
 echo done.  insert a disc...
