@@ -110,6 +110,8 @@ RUN \
   apt update -y && \
   DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends \
     abcde \
+    eyed3 \
+    atomicparsley \
     cdparanoia \
     eject \
     ffmpeg \
