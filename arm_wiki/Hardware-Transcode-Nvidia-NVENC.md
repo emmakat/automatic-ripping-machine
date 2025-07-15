@@ -52,14 +52,7 @@ Here is an [installation script](https://github.com/emmakat/automatic-ripping-ma
 
 
 ## Post install
-#### 1. Reload systemd
-```
-sudo systemctl daemon-reload
-```
-#### 2. Restart Docker daemon 
-```
-sudo systemctl restart docker
-```
+#### 1. Proceed with Docker installation script.
 
 #### 3. Verify Docker NVIDIA integration works
 ```
