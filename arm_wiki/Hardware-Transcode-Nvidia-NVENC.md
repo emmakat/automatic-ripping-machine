@@ -1,4 +1,7 @@
-# Checking for NVENC support
+# Installing NVIDIA drivers:
+We recommended to do a driver update immediately after installing ubuntu. In software updater, check the settings, other software tab and ensure the driver for your gpu is installed. Select the proprietary, tested option.
+
+## Checking for NVENC support
 Nvidia NVENC support comes with HandBrake in some distros, to check first make sure you have at least
 - GeForce GTX Pascal (1050+)
 - RTX Turing (1650+, 2060+) 
@@ -47,22 +50,25 @@ HandBrake 20230130172537-a5238f484-master
 If you don't see the extra options for nvenc then you will need to build HandBrakeCLI from source.
 Here is an [installation script](https://github.com/emmakat/automatic-ripping-machine/blob/emmakat-NVENC-handbrake-setup/scripts/installers/NVENC_handbrake_setup.sh)
 
-## Installing NVIDIA drivers:
-We recommended to do a driver update immediately after installing ubuntu
 
 ## Post install
-# 1. Reload systemd (the script showed this warning)
+#### 1. Reload systemd
 ```
 sudo systemctl daemon-reload
 ```
-# 2. Restart Docker daemon 
+#### 2. Restart Docker daemon 
 ```
 sudo systemctl restart docker
 ```
 
-# 3. Verify Docker NVIDIA integration works
+#### 3. Verify Docker NVIDIA integration works
 ```
 docker run --rm --gpus all nvidia/cuda:12.0-base-ubuntu20.04 nvidia-smi
+```
+#### The script adds the arm user to the video & render groups so that arm can access the NVENC encoder
+```
+sudo usermod -a -G video arm 
+sudo usermod -a -G render arm
 ```
 
 ### Once handbrake recognizes your GPU, you can use one of the 2 built in profiles in your arm.yaml config.
@@ -70,11 +76,6 @@ docker run --rm --gpus all nvidia/cuda:12.0-base-ubuntu20.04 nvidia-smi
 `H.265 NVENC 2160p 4K` OR `H.265 NVENC 1080p`
 
 
-#The script adds the arm user to the video & render groups so that arm can access the NVENC encoder
-```
-sudo usermod -a -G video arm 
-sudo usermod -a -G render arm
-```
 
 ------
 ## 🐋 - NVENC doesn't work
