@@ -24,6 +24,72 @@ echo "========================================================================"
 echo "Builds Handbrake with NVENC and CUDA LLVM support for ARM installations with a compatible RTX GPU"
 echo "========================================================================"
 
+# NEW: Function to get latest HandBrake version
+get_latest_handbrake_version() {
+    log_info "Finding current HandBrake version"
+    local handbrake_version
+    # More robust parsing for version number
+    handbrake_version=$(curl --silent 'https://github.com/HandBrake/HandBrake/releases' | grep -oP 'HandBrake/tree/\K[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)
+    if [ -z "$handbrake_version" ]; then
+        handbrake_version="1.8.2"  # fallback
+        log_warning "Could not determine latest HandBrake version, falling back to $handbrake_version"
+    fi
+    echo "$handbrake_version"
+}
+
+# NEW: Function to get latest CUDA version
+get_latest_cuda_version() {
+    log_info "Finding current CUDA version"
+    local cuda_version
+    # Try to get from NVIDIA downloads page
+    cuda_version=$(curl --silent "https://developer.nvidia.com/cuda-downloads" | grep -oE 'CUDA Toolkit [0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?')
+    if [ -z "$cuda_version" ]; then
+        cuda_version="12.6.3"  # fallback
+        log_warning "Could not determine latest CUDA version, falling back to $cuda_version"
+    fi
+    echo "$cuda_version"
+}
+
+# NEW: Function to get compatible driver version
+get_compatible_driver_version() {
+    local cuda_version="$1"
+    case "$cuda_version" in
+        "12.6.3"|"12.6.2"|"12.6.1"|"12.6.0") echo "560.35.05" ;;
+        "12.5.1"|"12.5.0") echo "555.42.06" ;;
+        "12.4.1"|"12.4.0") echo "550.54.15" ;;
+        "12.3.2"|"12.3.1"|"12.3.0") echo "545.23.08" ;;
+        *) echo "560.35.05" ;;  # safe fallback
+    esac
+}
+
+# NEW: Download and verify HandBrake if directory doesn't exist
+if [ ! -d "$HANDBRAKE_DIR" ]; then
+    HANDBRAKE_VERSION=$(get_latest_handbrake_version)
+    log_info "Downloading HandBrake $HANDBRAKE_VERSION"
+    
+    # Download source and signature
+    wget -O handbrake.tar.bz2.sig "https://github.com/HandBrake/HandBrake/releases/download/$HANDBRAKE_VERSION/HandBrake-$HANDBRAKE_VERSION-source.tar.bz2.sig" || log_error "Failed to download HandBrake signature"
+    wget -O handbrake.tar.bz2 "https://github.com/HandBrake/HandBrake/releases/download/$HANDBRAKE_VERSION/HandBrake-$HANDBRAKE_VERSION-source.tar.bz2" || log_error "Failed to download HandBrake source"
+    
+    # Verify signature
+    # https://handbrake.fr/openpgp.php or https://github.com/HandBrake/HandBrake/wiki/OpenPGP
+    GNUPGHOME="$(mktemp -d)" && export GNUPGHOME
+    gpg --batch --keyserver keyserver.ubuntu.com --recv-keys '1629 C061 B3DD E7EB 4AE3  4B81 021D B8B4 4E4A 8645' || log_error "Failed to retrieve GPG key"
+    gpg --batch --verify handbrake.tar.bz2.sig handbrake.tar.bz2 || log_error "HandBrake signature verification failed"
+    rm -rf "$GNUPGHOME" handbrake.tar.bz2.sig
+    
+    # Extract HandBrake
+    mkdir -p "$HANDBRAKE_DIR"
+    tar --extract \
+        --file handbrake.tar.bz2 \
+        --directory "$HANDBRAKE_DIR" \
+        --strip-components 1 \
+        "HandBrake-$HANDBRAKE_VERSION" || log_error "Failed to extract HandBrake source"
+    rm handbrake.tar.bz2
+    
+    log_success "HandBrake $HANDBRAKE_VERSION downloaded and verified"
+fi
+
 # Check if we're in the right directory
 if [ ! -d "$HANDBRAKE_DIR" ]; then
     log_error "HandBrake directory not found. Please run from directory containing HandBrake folder."
@@ -33,45 +99,83 @@ fi
 log_info "Installing EVERY available CUDA package..."
 sudo apt update
 
-# Try to install CUDA from multiple sources
+# Get the major CUDA version dynamically for apt packages
+CURRENT_CUDA_MAJOR_VERSION=$(get_latest_cuda_version | cut -d'.' -f1)
+if [ -z "$CURRENT_CUDA_MAJOR_VERSION" ]; then
+    CURRENT_CUDA_MAJOR_VERSION="12" # Fallback if detection fails
+    log_warning "Could not determine current CUDA major version for apt packages, falling back to $CURRENT_CUDA_MAJOR_VERSION"
+fi
+
+# Try to install CUDA from multiple sources, using the dynamically determined major version
 CUDA_PACKAGES=(
-    "cuda-toolkit-12-*"
-    "cuda-compiler-12-*"
-    "cuda-nvvm-dev-12-*"
-    "cuda-nvrtc-dev-12-*"
-    "cuda-driver-dev-12-*"
-    "cuda-nvcc-12-*"
-    "cuda-cudart-dev-12-*"
+    "cuda-toolkit-${CURRENT_CUDA_MAJOR_VERSION}-*"
+    "cuda-compiler-${CURRENT_CUDA_MAJOR_VERSION}-*"
+    "cuda-nvvm-dev-${CURRENT_CUDA_MAJOR_VERSION}-*"
+    "cuda-nvrtc-dev-${CURRENT_CUDA_MAJOR_VERSION}-*"
+    "cuda-driver-dev-${CURRENT_CUDA_MAJOR_VERSION}-*"
+    "cuda-nvcc-${CURRENT_CUDA_MAJOR_VERSION}-*"
+    "cuda-cudart-dev-${CURRENT_CUDA_MAJOR_VERSION}-*"
     "libcuda1"
     "libnvidia-ml-dev"
     "nvidia-cuda-dev"
     "libnvvm-dev"
-    "cuda-runtime-12-*"
+    "cuda-runtime-${CURRENT_CUDA_MAJOR_VERSION}-*"
 )
 
 for package in "${CUDA_PACKAGES[@]}"; do
-    sudo apt install -y "$package" 2>/dev/null && log_info "✅ Installed: $package" || log_warning "❌ Failed: $package"
+    # Removed 2>/dev/null to show apt output during installation attempts
+    if sudo apt install -y "$package"; then
+        log_info "✅ Installed: $package"
+    else
+        log_warning "❌ Failed: $package (See apt output above for details)"
+    fi
 done
 
-# Step 2: Manually install CUDA Toolkit if not present
+# Step 2: Manually install CUDA Toolkit if not present (UPDATED for dynamic version)
 if [ ! -d "/usr/local/cuda" ] && [ ! -d "/usr/local/cuda-12" ]; then
-    log_info "No CUDA installation found. Installing CUDA Toolkit manually..."
+    log_info "No CUDA installation found. Installing latest CUDA Toolkit..."
     
-    # Download CUDA installer
-    CUDA_INSTALLER="cuda_12.6.3_560.35.05_linux.run"
-    CUDA_URL="https://developer.download.nvidia.com/compute/cuda/12.6.3/local_installers/$CUDA_INSTALLER"
+    # NEW: Get latest CUDA version dynamically
+    CUDA_VERSION=$(get_latest_cuda_version)
+    DRIVER_VERSION=$(get_compatible_driver_version "$CUDA_VERSION")
+    
+    CUDA_INSTALLER="cuda_${CUDA_VERSION}_${DRIVER_VERSION}_linux.run"
+    CUDA_URL="https://developer.download.nvidia.com/compute/cuda/${CUDA_VERSION}/local_installers/$CUDA_INSTALLER"
+    CUDA_CHECKSUM_URL="https://developer.download.nvidia.com/compute/cuda/${CUDA_VERSION}/local_installers/$CUDA_INSTALLER.sha256"
+    
+    log_info "Downloading CUDA $CUDA_VERSION with driver $DRIVER_VERSION"
     
     cd /tmp
-    if ! wget "$CUDA_URL" 2>/dev/null; then
-        log_warning "Could not download CUDA installer - using repository packages only"
+    
+    # Download CUDA installer (removed 2>/dev/null to show progress/errors)
+    if ! wget "$CUDA_URL"; then
+        log_warning "Could not download latest CUDA installer. Continuing with repository packages only."
+        cd - > /dev/null
     else
+        # Try to download and verify checksum
+        log_info "Verifying CUDA installer integrity..."
+        if wget "$CUDA_CHECKSUM_URL" -O "$CUDA_INSTALLER.sha256"; then
+            # Verify SHA256 checksum
+            if sha256sum -c "$CUDA_INSTALLER.sha256"; then
+                log_success "CUDA installer checksum verified"
+            else
+                log_warning "CUDA installer checksum verification failed, but continuing..."
+            fi
+            rm -f "$CUDA_INSTALLER.sha256"
+        else
+            log_warning "Could not download CUDA checksum, skipping verification"
+        fi
+        
         # Install CUDA toolkit (toolkit only, no drivers)
         chmod +x "$CUDA_INSTALLER"
-        sudo sh "$CUDA_INSTALLER" --silent --toolkit --no-opengl-libs
+        if sudo sh "$CUDA_INSTALLER" --silent --toolkit --no-opengl-libs; then
+            log_success "CUDA $CUDA_VERSION installed manually"
+        else
+            log_error "CUDA installation failed"
+        fi
         rm -f "$CUDA_INSTALLER"
-        log_success "CUDA Toolkit installed manually"
+        cd - > /dev/null
     fi
-    cd - > /dev/null
 fi
 
 # Step 3: Find and configure CUDA paths aggressively
@@ -111,7 +215,6 @@ log_info "Setting up CUDA environment..."
 
 export CUDA_HOME="$CUDA_ROOT"
 export CUDA_PATH="$CUDA_ROOT"
-export CUDA_ROOT="$CUDA_ROOT"
 export PATH="$CUDA_ROOT/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 export LD_LIBRARY_PATH="$CUDA_ROOT/lib64:$CUDA_ROOT/nvvm/lib64:/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
 export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH"
